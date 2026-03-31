@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/Providers";
+import { JsonLd } from "@/components/JsonLd";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -132,6 +133,7 @@ export default function RootLayout({
         className="min-h-full flex flex-col bg-background"
         suppressHydrationWarning
       >
+        <JsonLd />
         <Providers>{children}</Providers>
         <Toaster position="top-center" richColors closeButton />
       </body>
