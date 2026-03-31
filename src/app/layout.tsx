@@ -15,7 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 const APP_NAME = "ClearContract";
-const APP_DESCRIPTION = "Upload your legal contracts and get instant AI analysis to identify red flags, hidden fees, and problematic clauses in simple, easy-to-understand language.";
+const APP_DESCRIPTION =
+  "Upload your legal contracts and get instant AI analysis to identify red flags, hidden fees, and problematic clauses in simple, easy-to-understand language.";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://clearcontract.app";
 
 export const metadata: Metadata = {
@@ -44,13 +45,14 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
     languages: {
-      "en": "/",
-      "id": "/",
+      en: "/",
+      id: "/",
     },
   },
   openGraph: {
     title: `${APP_NAME} - AI-Powered Contract Analysis`,
-    description: "Make reading contracts stress-free. Get instant AI analysis to identify red flags and problematic clauses.",
+    description:
+      "Make reading contracts stress-free. Get instant AI analysis to identify red flags and problematic clauses.",
     type: "website",
     locale: "en_US",
     alternateLocale: "id_ID",
@@ -60,7 +62,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: `${APP_NAME} - AI-Powered Contract Analysis`,
-    description: "Make reading contracts stress-free. Get instant AI analysis to identify red flags and problematic clauses.",
+    description:
+      "Make reading contracts stress-free. Get instant AI analysis to identify red flags and problematic clauses.",
   },
   robots: {
     index: true,
@@ -116,15 +119,20 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <meta
+          name="google-site-verification"
+          content="jJHGCMuoy94jnBqTSb921m99iNlXYSH5YDjl1YJnpxI"
+        />{" "}
         <script
           dangerouslySetInnerHTML={{ __html: themeScript }}
           suppressHydrationWarning
         />
       </head>
-      <body className="min-h-full flex flex-col bg-background" suppressHydrationWarning>
-        <Providers>
-          {children}
-        </Providers>
+      <body
+        className="min-h-full flex flex-col bg-background"
+        suppressHydrationWarning
+      >
+        <Providers>{children}</Providers>
         <Toaster position="top-center" richColors closeButton />
       </body>
     </html>
