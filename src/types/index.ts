@@ -21,10 +21,6 @@ export interface ExtractResponse {
   text?: string;
   error?: string;
   pageCount?: number;
-  metadata?: {
-    extractionMethod?: 'standard' | 'ocr';
-    ocrConfidence?: number;
-  };
 }
 
 export interface AnalyzeResponse {

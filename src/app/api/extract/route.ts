@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PDFParse } from 'pdf-parse';
 import { checkRateLimit, getClientIp, getRateLimitHeaders } from '@/lib/rateLimit';
-import { extractTextWithFallback } from '@/lib/ocr';
 import type { ExtractResponse } from '@/types';
 
 export const runtime = 'nodejs';
@@ -66,38 +65,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractRe
     // Extract text
     const textResult = await parser.getText();
 
-    // Check if standard extraction worked well
-    let extractedText = textResult.text || '';
-    let extractionMethod = 'standard';
-    let ocrConfidence: number | undefined;
-
-    // If standard extraction is insufficient, try OCR fallback
-    if (!extractedText || extractedText.trim().length < 100) {
-      console.log('Standard extraction returned insufficient text, attempting OCR...');
-      try {
-        const ocrResult = await extractTextWithFallback(data, extractedText);
-        extractedText = ocrResult.text;
-        extractionMethod = ocrResult.method;
-        ocrConfidence = ocrResult.confidence;
-      } catch (ocrError) {
-        console.error('OCR fallback failed:', ocrError);
-        // If OCR also fails, return error
-        return NextResponse.json(
-          { success: false, error: 'Could not extract text from PDF. The file may be corrupted, empty, or uses an unsupported format.' },
-          { status: 400 }
-        );
-      }
-    }
-
-    if (!extractedText || extractedText.trim().length === 0) {
+    if (!textResult.text || textResult.text.trim().length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Could not extract text from PDF. Please try a different file.' },
+        { success: false, error: 'Could not extract text from PDF. The file may be scanned/image-based or empty.' },
         { status: 400 }
       );
     }
 
     // Clean up the extracted text
-    const cleanedText = extractedText
+    const cleanedText = textResult.text
       .replace(/\s+/g, ' ') // Normalize whitespace
       .replace(/\n{3,}/g, '\n\n') // Remove excessive line breaks
       .trim();
@@ -109,10 +85,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractRe
       success: true,
       text: cleanedText,
       pageCount: info.total ?? textResult.total,
-      metadata: {
-        extractionMethod: extractionMethod as 'standard' | 'ocr',
-        ocrConfidence: ocrConfidence ? Math.round(ocrConfidence) : undefined,
-      },
     });
   } catch (error) {
     // Clean up parser on error
