@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PDFParse } from 'pdf-parse';
+import { extractTextFromPDF } from '@/lib/pdf';
 import { checkRateLimit, getClientIp, getRateLimitHeaders } from '@/lib/rateLimit';
 import type { ExtractResponse } from '@/types';
 
@@ -9,8 +9,6 @@ export const runtime = 'nodejs';
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export async function POST(request: NextRequest): Promise<NextResponse<ExtractResponse>> {
-  let parser: PDFParse | null = null;
-  
   try {
     // Rate limiting
     const clientIp = getClientIp(request.headers);
@@ -56,54 +54,29 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractRe
     const arrayBuffer = await file.arrayBuffer();
     const data = new Uint8Array(arrayBuffer);
 
-    // Parse PDF using the new API
-    parser = new PDFParse({ data });
-    
-    // Get document info for page count
-    const info = await parser.getInfo();
-    
-    // Extract text
-    const textResult = await parser.getText();
-
-    if (!textResult.text || textResult.text.trim().length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Could not extract text from PDF. The file may be scanned/image-based or empty.' },
-        { status: 400 }
-      );
-    }
-
-    // Clean up the extracted text
-    const cleanedText = textResult.text
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .replace(/\n{3,}/g, '\n\n') // Remove excessive line breaks
-      .trim();
-
-    // Clean up parser
-    await parser.destroy();
+    // Extract text from PDF
+    const result = await extractTextFromPDF(data);
 
     return NextResponse.json({
       success: true,
-      text: cleanedText,
-      pageCount: info.total ?? textResult.total,
+      text: result.text,
+      pageCount: result.pageCount,
     });
   } catch (error) {
-    // Clean up parser on error
-    if (parser) {
-      try {
-        await parser.destroy();
-      } catch {
-        // Ignore cleanup errors
-      }
-    }
-    
     console.error('PDF extraction error:', error);
     
-    // Handle specific pdf-parse errors
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
     if (errorMessage.includes('Invalid PDF') || errorMessage.includes('corrupt')) {
       return NextResponse.json(
         { success: false, error: 'The file appears to be corrupted or is not a valid PDF' },
+        { status: 400 }
+      );
+    }
+
+    if (errorMessage.includes('No text content')) {
+      return NextResponse.json(
+        { success: false, error: 'Could not extract text from PDF. The file may be empty or only contain images.' },
         { status: 400 }
       );
     }
